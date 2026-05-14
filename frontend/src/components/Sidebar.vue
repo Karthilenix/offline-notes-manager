@@ -160,7 +160,7 @@ const formatDate = (date) => {
 };
 </script>
 
-<style scoped>
+<style>
 .sidebar {
   width: 340px;
 

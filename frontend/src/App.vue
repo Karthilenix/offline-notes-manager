@@ -22,9 +22,7 @@
     searchQuery = $event
   "
 
-  @update-sort="
-    sortOption = $event
-  "
+  @update-sort="updateSort"
 />
 
       <NoteEditor
@@ -64,50 +62,40 @@ const searchQuery = ref("");
 
 const darkMode = ref(false);
 
+const sortOption = ref("updated-desc");
 // LOAD NOTES
 const loadNotes = async () => {
-
   notes.value = await getAllNotes();
-
-  notes.value.sort(
-    (a, b) =>
-      new Date(b.updatedAt) -
-      new Date(a.updatedAt)
-  );
 };
 
-// FILTERED NOTES
+// FILTERED AND SORTED NOTES
 const filteredNotes = computed(() => {
+  let result = notes.value;
 
-  if (!searchQuery.value.trim()) {
-    return notes.value;
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(note => {
+      const titleMatch = note.title.toLowerCase().includes(query);
+      const contentMatch = note.content.toLowerCase().includes(query);
+      const tagsMatch = note.tags.some(tag => tag.toLowerCase().includes(query));
+      return titleMatch || contentMatch || tagsMatch;
+    });
   }
 
-  const query =
-    searchQuery.value.toLowerCase();
-
-  return notes.value.filter(note => {
-
-    const titleMatch =
-      note.title
-        .toLowerCase()
-        .includes(query);
-
-    const contentMatch =
-      note.content
-        .toLowerCase()
-        .includes(query);
-
-    const tagsMatch =
-      note.tags.some(tag =>
-        tag.toLowerCase().includes(query)
-      );
-
-    return (
-      titleMatch ||
-      contentMatch ||
-      tagsMatch
-    );
+  return [...result].sort((a, b) => {
+    if (sortOption.value === "updated-desc") {
+      return new Date(b.updatedAt) - new Date(a.updatedAt);
+    }
+    if (sortOption.value === "updated-asc") {
+      return new Date(a.updatedAt) - new Date(b.updatedAt);
+    }
+    if (sortOption.value === "created-desc") {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    if (sortOption.value === "created-asc") {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    }
+    return 0;
   });
 });
 
@@ -152,6 +140,10 @@ const handleSelectNote = (note) => {
 // CLEAR SELECTION
 const clearSelection = () => {
   selectedNote.value = null;
+};
+
+const updateSort = (value) => {
+  sortOption.value = value;
 };
 
 //Dark Mode
